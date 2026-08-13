@@ -9,7 +9,12 @@ class DocumentController:
     def __init__(self, db: Session):
         self.service = DocumentService(db)
 
+    async def upload_document_async(self, file: UploadFile, current_user: dict):
+        """Upload document with async processing"""
+        return await self.service.process_and_save_document_async(file, current_user["id"])
+
     def upload_document(self, file: UploadFile, current_user: dict):
+        """Upload document (sync wrapper - deprecated, use upload_document_async)"""
         return self.service.process_and_save_document(file, current_user["id"])
 
     def get_documents(self, current_user: dict):

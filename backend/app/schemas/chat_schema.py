@@ -1,5 +1,5 @@
 # app/schemas/chat_schema.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -19,6 +19,7 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: str
+    citations: List[Citation] = Field(default_factory=list)
 
 
 class ChatResponse(BaseModel):

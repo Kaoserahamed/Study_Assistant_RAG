@@ -1,186 +1,110 @@
-# app/services/llm_service.py
+"""Gemini generation client used after retrieval."""
+import asyncio
 import os
-import requests
-from typing import List, Generator
+from typing import AsyncGenerator
+
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable not set. Get it from https://ai.google.dev/")
 
-# Use REST API directly for more stability
 API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
+# Use gemini-3.5-flash - current stable model as of August 2026
+# gemini-2.5-flash is no longer available to new users
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+MAX_CONTEXT_CHARS = int(os.getenv("RAG_MAX_CONTEXT_CHARS", "14000"))
 
 
 class LLMService:
-    """Service for interacting with Google's Gemini API via REST"""
-    
     @staticmethod
-    def _get_model() -> str:
-        """Get available model name"""
-        return "gemini-3.5-flash"
-    
+    def _build_request(question: str, context: str) -> dict:
+        trimmed_context = context[:MAX_CONTEXT_CHARS].strip()
+        source_text = trimmed_context or "(No relevant passages were retrieved.)"
+        return {
+            "systemInstruction": {"parts": [{"text": (
+                "You are a careful student assistant. Answer the question based only on the SOURCE PASSAGES provided. "
+                "Do NOT invent facts, citations, or page numbers. "
+                "Do NOT include [Source X] citations in your answer - the system handles citations separately. "
+                "When sources contain raw data (tables, metrics, numbers), summarize the key findings rather than copying data verbatim. "
+                "Extract insights and trends from data. Be concise and direct in your response."
+            )}]},
+            "contents": [{"role": "user", "parts": [{"text": (
+                f"SOURCE PASSAGES:\n---\n{source_text}\n---\n\nQUESTION: {question.strip()}"
+            )}]}],
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1500},
+            "safetySettings": [
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+            ],
+        }
+
+    @staticmethod
+    def _response_text(result: dict) -> str:
+        candidates = result.get("candidates") or []
+        if not candidates:
+            reason = result.get("promptFeedback", {}).get("blockReason", "no candidate returned")
+            raise ValueError(f"Gemini could not generate a response ({reason}).")
+        parts = candidates[0].get("content", {}).get("parts", [])
+        text = "".join(part.get("text", "") for part in parts).strip()
+        if not text:
+            reason = candidates[0].get("finishReason", "empty response")
+            raise ValueError(f"Gemini returned no answer ({reason}).")
+        return text
+
+    @staticmethod
+    async def generate_response_async(prompt: str, context: str = "") -> str:
+        if not prompt or not prompt.strip():
+            raise ValueError("A question is required.")
+        
+        print(f"[LLM] === GENERATE RESPONSE (ASYNC) ===")
+        print(f"[LLM] Prompt length: {len(prompt)}")
+        print(f"[LLM] Context length: {len(context)}")
+        print(f"[LLM] Context preview (first 300 chars): {context[:300] if context else '(empty)'}")
+        
+        url = f"{API_ENDPOINT}/{GEMINI_MODEL}:generateContent"
+        headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
+        payload = LLMService._build_request(prompt, context)
+        
+        print(f"[LLM] Sending {len(context[:MAX_CONTEXT_CHARS])} context chars to {GEMINI_MODEL}")
+        
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
+            for attempt in range(3):
+                response = await client.post(url, headers=headers, json=payload)
+                if response.status_code not in (429, 500, 502, 503, 504) or attempt == 2:
+                    break
+                await asyncio.sleep(2 ** attempt)
+        if response.status_code != 200:
+            detail = response.text[:500]
+            raise RuntimeError(f"Gemini API request failed ({response.status_code}): {detail}")
+        return LLMService._response_text(response.json())
+
     @staticmethod
     def generate_response(prompt: str, context: str = "") -> str:
-        """Generate response from Gemini
-        
-        Args:
-            prompt: User's question
-            context: Retrieved context from documents
-            
-        Returns:
-            Generated response from the model
-        """
-        try:
-            print(f"\n[LLM] === GENERATE RESPONSE ===")
-            print(f"[LLM] Prompt: {prompt[:80]}...")
-            print(f"[LLM] Context length: {len(context)} chars")
-            print(f"[LLM] Model: gemini-3.5-flash")
-            
-            if context:
-                print(f"[LLM] Context preview:")
-                print(f"[LLM]   {context[:300]}...")
-            else:
-                print(f"[LLM] WARNING: NO CONTEXT PROVIDED TO LLM!")
-            
-            # Build the full prompt with context
-            full_prompt = f"""Based on the following context from uploaded documents, answer the question accurately and concisely.
+        return asyncio.run(LLMService.generate_response_async(prompt, context))
 
-Context:
-{context if context else "No specific context provided"}
-
-Question: {prompt}
-
-Answer:"""
-            
-            model = LLMService._get_model()
-            url = f"{API_ENDPOINT}/{model}:generateContent?key={GEMINI_API_KEY}"
-            
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": full_prompt
-                            }
-                        ]
-                    }
-                ]
-            }
-            
-            print(f"[LLM] Sending request to Gemini...")
-            import time
-            start = time.time()
-            
-            response = requests.post(url, json=payload, timeout=60)
-            
-            elapsed = time.time() - start
-            print(f"[LLM] Response received in {elapsed:.2f}s (status: {response.status_code})")
-            
-            if response.status_code != 200:
-                print(f"[LLM] Error: {response.text[:200]}")
-                raise Exception(f"API Error: {response.status_code} - {response.text}")
-            
-            result = response.json()
-            print(f"[LLM] Response has candidates: {'candidates' in result}")
-            
-            if "candidates" in result and len(result["candidates"]) > 0:
-                response_text = result["candidates"][0]["content"]["parts"][0]["text"].strip()
-                print(f"[LLM] Success! Response length: {len(response_text)} chars")
-                print(f"[LLM] First 100 chars: {response_text[:100]}")
-                return response_text
-            else:
-                print(f"[LLM] Error: No candidates in response")
-                raise Exception("No response from Gemini API")
-            
-        except Exception as e:
-            print(f"[LLM] ERROR: {str(e)}")
-            raise Exception(f"Failed to generate response: {str(e)}")
-    
     @staticmethod
-    def stream_response(prompt: str, context: str = "") -> Generator[str, None, None]:
-        """Stream response from Gemini
-        
-        Yields:
-            Response tokens as they are generated
-        """
+    async def stream_response_async(prompt: str, context: str = "") -> AsyncGenerator[str, None]:
+        # The application does not currently expose a streaming endpoint. Keeping one
+        # response path avoids two prompts that can drift and produce inconsistent answers.
+        yield await LLMService.generate_response_async(prompt, context)
+
+    @staticmethod
+    async def check_connection_async() -> bool:
         try:
-            full_prompt = f"""Based on the following context from uploaded documents, answer the question accurately and concisely.
+            await LLMService.generate_response_async("Reply with OK.", "[Source 1] Connection test.")
+            return True
+        except Exception:
+            return False
 
-Context:
-{context if context else "No specific context provided"}
-
-Question: {prompt}
-
-Answer:"""
-            
-            model = LLMService._get_model()
-            url = f"{API_ENDPOINT}/{model}:streamGenerateContent?key={GEMINI_API_KEY}"
-            
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": full_prompt
-                            }
-                        ]
-                    }
-                ]
-            }
-            
-            response = requests.post(url, json=payload, timeout=30, stream=True)
-            
-            if response.status_code != 200:
-                raise Exception(f"API Error: {response.status_code} - {response.text}")
-            
-            for line in response.iter_lines():
-                if line:
-                    import json
-                    try:
-                        data = json.loads(line)
-                        if "candidates" in data and len(data["candidates"]) > 0:
-                            if "content" in data["candidates"][0]:
-                                if "parts" in data["candidates"][0]["content"]:
-                                    for part in data["candidates"][0]["content"]["parts"]:
-                                        if "text" in part:
-                                            yield part["text"]
-                    except json.JSONDecodeError:
-                        continue
-                    
-        except Exception as e:
-            print(f"Error streaming response: {str(e)}")
-            raise Exception(f"Failed to stream response: {str(e)}")
-    
     @staticmethod
     def check_connection() -> bool:
-        """Check if Gemini API is accessible"""
-        try:
-            model = LLMService._get_model()
-            url = f"{API_ENDPOINT}/{model}:generateContent?key={GEMINI_API_KEY}"
-            
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": "Hello"
-                            }
-                        ]
-                    }
-                ]
-            }
-            
-            response = requests.post(url, json=payload, timeout=10)
-            return response.status_code == 200
-            
-        except Exception as e:
-            print(f"Gemini connection error: {str(e)}")
-            return False
+        return asyncio.run(LLMService.check_connection_async())
 
 
 llm_service = LLMService()
-

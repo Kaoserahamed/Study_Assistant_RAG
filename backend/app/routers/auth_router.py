@@ -14,8 +14,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
 
 
 @router.post("/register", response_model=UserResponse)
-async def register(request: UserRegisterRequest):
-    return await auth_controller.register(request)
+async def register(user_request: UserRegisterRequest):
+    return await auth_controller.register(user_request)
 
 
 @router.post("/login", response_model=TokenResponse)

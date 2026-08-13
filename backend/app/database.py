@@ -1,4 +1,5 @@
 import os
+from urllib.parse import quote_plus
 import mysql.connector
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -22,7 +23,10 @@ def get_db_connection():
 
 
 # SQLAlchemy setup for ORM models
-DATABASE_URL = f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+DATABASE_URL = (
+    f"mysql+pymysql://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
+    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}?charset=utf8mb4"
+)
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

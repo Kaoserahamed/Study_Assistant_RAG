@@ -41,6 +41,7 @@ export function DocumentViewerPage() {
   // Fetch document (PDF or text) with proper authentication
   useEffect(() => {
     if (!doc) return
+    let objectUrl: string | null = null
 
     const fetchDocument = async () => {
       try {
@@ -69,16 +70,19 @@ export function DocumentViewerPage() {
         console.log('Document blob received, size:', blob.size, 'type:', blob.type)
         
         // Check if it's a PDF or text file based on MIME type and filename
-        const isBlobPdf = blob.type === 'application/pdf' || doc.title.toLowerCase().endsWith('.pdf')
+        const fileName = doc.title.toLowerCase()
+        const isBlobPdf = blob.type === 'application/pdf' || fileName.endsWith('.pdf')
+        const isTextFile = blob.type.startsWith('text/') || fileName.endsWith('.txt')
         
         if (isBlobPdf) {
           console.log('Detected as PDF file, creating blob URL...')
           const url = URL.createObjectURL(blob)
+          objectUrl = url
           console.log('PDF Object URL created:', url)
           setPdfUrl(url)
           setIsPdfFile(true)
           setIsLoadingPdf(false)  // Allow PdfCanvas to render now
-        } else {
+        } else if (isTextFile) {
           // It's a text file - read as text
           console.log('Detected as text file, reading content...')
           const text = await blob.text()
@@ -87,6 +91,9 @@ export function DocumentViewerPage() {
           setIsPdfFile(false)
           // For text files, assume 1 page
           setNumPages(1)
+          setIsLoadingPdf(false)
+        } else {
+          setError('Preview is currently available for PDF and text documents. You can still use this document in chat.')
           setIsLoadingPdf(false)
         }
       } catch (err) {
@@ -99,9 +106,8 @@ export function DocumentViewerPage() {
     fetchDocument()
 
     return () => {
-      if (pdfUrl) {
-        console.log('Revoking blob URL:', pdfUrl)
-        URL.revokeObjectURL(pdfUrl)
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
       }
     }
   }, [doc?.id, doc?.title])

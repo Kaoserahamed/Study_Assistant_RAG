@@ -1,4 +1,5 @@
 # main.py
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,10 +17,15 @@ from app.routers.chat_router import router as chat_router
 
 app = FastAPI(title="Student Assistant")
 
-# Add CORS middleware - allow credentials for file downloads
+# CORS Configuration - read from environment
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

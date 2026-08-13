@@ -1,5 +1,5 @@
 # app/models/message.py
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -19,6 +19,7 @@ class Message(Base):
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
     content = Column(Text, nullable=False)
+    citations = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")

@@ -3,7 +3,7 @@ import { inferKindFromFileName } from '@/utils/format'
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT ? parseInt(import.meta.env.VITE_API_TIMEOUT) : 30000
+const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT ? parseInt(import.meta.env.VITE_API_TIMEOUT) : 120000
 
 // Supported file types
 const SUPPORTED_FORMATS = ['pdf', 'docx', 'pptx', 'ppt', 'txt']
@@ -30,6 +30,8 @@ async function apiCall(
 ): Promise<Response> {
   const url = `${API_BASE_URL}${endpoint}`
   const headers = new Headers(options.headers)
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT)
 
   if (includeAuth) {
     const token = localStorage.getItem('access_token')
@@ -38,15 +40,26 @@ async function apiCall(
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  })
+  let response: Response
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+      signal: options.signal ?? controller.signal,
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`Request timed out after ${API_TIMEOUT / 1000} seconds`)
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
 
   if (response.status === 401) {
     // Token expired, redirect to login
     localStorage.removeItem('access_token')
-    window.location.href = '/auth/login'
+    window.location.href = '/login'
   }
 
   if (!response.ok) {

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
 @router.post("/conversations", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
-def create_conversation(
+async def create_conversation(
     request: CreateConversationRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
@@ -82,15 +82,15 @@ def delete_conversation(
 
 
 @router.post("/conversations/{conversation_id}/messages", response_model=ChatResponse)
-def send_message(
+async def send_message(
     conversation_id: int,
     request: SendMessageRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    """Send a message and get AI response"""
+    """Send a message and get AI response (async)"""
     service = ChatService(db)
-    result = service.send_message(
+    result = await service.send_message_async(
         conversation_id=conversation_id,
         user_id=current_user["id"],
         query=request.query,

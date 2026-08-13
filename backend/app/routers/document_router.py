@@ -1,25 +1,50 @@
 # app/routers/document_router.py
 from typing import List
-from fastapi import APIRouter, Depends, UploadFile, File, status, Header
+from fastapi import APIRouter, Depends, UploadFile, File, status, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import os
+import mimetypes
 
 from app.database import get_db
 from app.schemas.document import DocumentResponse, DocumentDetailResponse
 from app.controllers.document_controller import DocumentController
 from app.auth import get_current_user
+from app.services.document_processor import SUPPORTED_FORMATS
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
+# Allowed file types and size limits
+ALLOWED_EXTENSIONS = SUPPORTED_FORMATS
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+def validate_file(file: UploadFile) -> None:
+    """Validate file type and size"""
+    # Check file extension
+    if file.filename:
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
+            )
+    
+    # Note: file.size is not always available, will check during processing
+    # The actual size check happens when reading the file
+
+
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
-def upload_document(
+async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    """Upload and process document asynchronously"""
+    # Validate file before processing
+    validate_file(file)
+    
     controller = DocumentController(db)
-    return controller.upload_document(file, current_user)
+    return await controller.upload_document_async(file, current_user)
 
 @router.get("/", response_model=List[DocumentResponse])
 def get_documents(
@@ -33,28 +58,16 @@ def get_documents(
 @router.get("/{document_id}/file")
 def download_document(
     document_id: int,
-    authorization: str = Header(None),
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    """Download/serve the document file - manual auth validation"""
+    """Download an owned document with its actual content type."""
     try:
-        # Validate authorization header
-        if not authorization:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=401, detail="Missing authorization header")
-        
-        try:
-            scheme, token = authorization.split(" ")
-            if scheme.lower() != "bearer":
-                from fastapi import HTTPException
-                raise HTTPException(status_code=401, detail="Invalid authorization scheme")
-        except ValueError:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=401, detail="Invalid authorization header format")
-        
-        # Get document from database
         from app.models.document import Document
-        doc = db.query(Document).filter(Document.id == document_id).first()
+        doc = db.query(Document).filter(
+            Document.id == document_id,
+            Document.user_id == current_user["id"],
+        ).first()
         
         if not doc:
             from fastapi import HTTPException
@@ -76,7 +89,7 @@ def download_document(
         
         return FileResponse(
             path=file_path,
-            media_type="application/pdf",
+            media_type=mimetypes.guess_type(doc.filename)[0] or "application/octet-stream",
             filename=os.path.basename(file_path),
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",

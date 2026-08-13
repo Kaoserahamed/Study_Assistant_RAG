@@ -19,7 +19,7 @@ class PDFService:
                 detail=f"Unsupported file format. Supported formats: {supported}"
             )
         
-        unique_filename = f"{uuid.uuid4()}_{file.filename}"
+        unique_filename = f"{uuid.uuid4()}_{os.path.basename(file.filename)}"
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
         
         with open(file_path, "wb") as buffer:
@@ -28,8 +28,16 @@ class PDFService:
         return file_path
     
     @staticmethod
-    def extract_chunks(file_path: str, chunk_size: int = 800, overlap: int = 100):
-        """Extract chunks from any supported document format"""
+    def extract_chunks(file_path: str, chunk_size: int = 1400, overlap: int = 200):
+        """Extract chunks from any supported document format
+        
+        Args:
+            file_path: Path to the document
+            chunk_size: Size of each chunk in characters (default 1400 - about 220-280 words)
+            overlap: Overlap between chunks (default 200 chars)
+            
+        Moderate chunks preserve topic focus while the overlap keeps sentences at chunk boundaries retrievable.
+        """
         return DocumentProcessor.process_file(file_path, chunk_size, overlap)
     
     @staticmethod

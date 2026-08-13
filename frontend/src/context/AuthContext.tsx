@@ -63,10 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null)
     setIsLoading(true)
     try {
-      const newUser = await registerUser(email, name, password)
-      setUser(newUser)
-      // Auto login after registration
       await loginUser(email, password)
+      // Only mark the session authenticated after the token is stored and valid.
+      const newUser = await getCurrentUser()
+      setUser(newUser)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed'
       setError(message)

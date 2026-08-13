@@ -10,7 +10,9 @@ from app.repositories.user_repository import user_repository
 # Load environment variables
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-keep-it-secret")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY or SECRET_KEY == "your-secret-key-keep-it-secret":
+    raise RuntimeError("SECRET_KEY must be configured to a strong, unique value.")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 

@@ -13,13 +13,14 @@ class MessageRepository:
         conversation_id: int,
         role: RoleEnum,
         content: str,
-        citations: dict = None
+        citations: list = None
     ) -> Message:
         """Create a new message"""
         message = Message(
             conversation_id=conversation_id,
             role=role,
-            content=content
+            content=content,
+            citations=citations,
         )
         self.db.add(message)
         self.db.commit()

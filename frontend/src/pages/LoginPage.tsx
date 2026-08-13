@@ -72,75 +72,78 @@ export function LoginPage() {
   const handleSubmit = isRegistering ? handleRegister : handleLogin
 
   return (
-    <main className="min-h-screen bg-[#F8F9FC] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-2xl bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex flex-col lg:flex-row lg:min-h-[600px]">
         
         {/* Left Brand Panel */}
-        <section className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <section className="relative w-full overflow-hidden bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 p-8 text-white lg:w-1/2 lg:p-12">
           
           {/* Decorative shapes */}
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10" />
-          <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-white/10" />
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
 
-          <div className="relative z-10">
-            <div className="mb-10 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-                <GraduationCap size={25} />
+          <div className="relative z-10 flex h-full flex-col justify-between">
+            <div>
+              <div className="mb-8 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                  <GraduationCap size={24} strokeWidth={2.5} />
+                </div>
+
+                <span className="text-xl font-bold">
+                  Study Assistant
+                </span>
               </div>
 
-              <span className="text-lg font-semibold">
-                Study Assistant
-              </span>
-            </div>
+              <div className="max-w-md">
+                <h1 className="text-4xl font-bold leading-tight lg:text-5xl">
+                  Learn smarter.
+                  <br />
+                  Study better.
+                </h1>
 
-            <div className="max-w-md">
-              <h1 className="text-4xl font-bold leading-tight">
-                Learn smarter.
-                <br />
-                Study better.
-              </h1>
-
-              <p className="mt-5 text-base leading-7 text-indigo-100">
-                Your AI-powered study companion for understanding
-                documents, asking questions, and learning more efficiently.
-              </p>
-            </div>
-          </div>
-
-          {/* Illustration */}
-          <div className="relative z-10 flex justify-center py-8">
-            <div className="relative flex h-52 w-64 items-end justify-center">
-              <div className="absolute bottom-0 h-20 w-56 rounded-full bg-indigo-900/20 blur-xl" />
-
-              <div className="absolute bottom-8 left-8 h-16 w-40 rotate-[-5deg] rounded-lg bg-white shadow-lg" />
-              <div className="absolute bottom-12 left-12 h-16 w-40 rotate-[4deg] rounded-lg bg-indigo-100 shadow-lg" />
-              <div className="absolute bottom-16 left-16 h-16 w-40 rotate-[-2deg] rounded-lg bg-violet-100 shadow-lg" />
-
-              <div className="absolute bottom-28 flex h-20 w-20 items-center justify-center rounded-full bg-white text-indigo-600 shadow-xl">
-                <BookOpen size={36} />
+                <p className="mt-6 text-base leading-relaxed text-indigo-50 lg:text-lg">
+                  Your AI-powered study companion for understanding
+                  documents, asking questions, and learning more efficiently.
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* Features */}
-          <div className="relative z-10 grid grid-cols-3 gap-4">
-            <Feature
-              icon={<MessageCircle size={18} />}
-              title="Ask Questions"
-              description="Get instant answers"
-            />
+            {/* Illustration */}
+            <div className="hidden lg:flex justify-center py-10">
+              <div className="relative flex h-48 w-64 items-end justify-center">
+                <div className="absolute bottom-0 h-20 w-56 rounded-full bg-indigo-900/30 blur-2xl" />
 
-            <Feature
-              icon={<Sparkles size={18} />}
-              title="Study Smarter"
-              description="Summarize and learn"
-            />
+                <div className="absolute bottom-8 left-8 h-14 w-36 rotate-[-6deg] rounded-lg bg-white/90 shadow-xl" />
+                <div className="absolute bottom-12 left-12 h-14 w-36 rotate-[5deg] rounded-lg bg-indigo-50 shadow-xl" />
+                <div className="absolute bottom-16 left-16 h-14 w-36 rotate-[-3deg] rounded-lg bg-violet-50 shadow-xl" />
 
-            <Feature
-              icon={<TrendingUp size={18} />}
-              title="Track Progress"
-              description="Improve every day"
-            />
+                <div className="absolute bottom-28 flex h-20 w-20 items-center justify-center rounded-full bg-white text-indigo-600 shadow-2xl">
+                  <BookOpen size={36} strokeWidth={2} />
+                </div>
+              </div>
+            </div>
+
+            {/* Features */}
+            <div className="hidden lg:grid grid-cols-3 gap-4 pt-4">
+              <Feature
+                icon={<MessageCircle size={18} strokeWidth={2.5} />}
+                title="Ask Questions"
+                description="Get instant answers"
+              />
+
+              <Feature
+                icon={<Sparkles size={18} strokeWidth={2.5} />}
+                title="Study Smarter"
+                description="Summarize and learn"
+              />
+
+              <Feature
+                icon={<TrendingUp size={18} strokeWidth={2.5} />}
+                title="Track Progress"
+                description="Improve every day"
+              />
+            </div>
           </div>
         </section>
 
@@ -149,23 +152,23 @@ export function LoginPage() {
           <div className="w-full max-w-md">
             
             {/* Mobile brand */}
-            <div className="mb-8 flex items-center gap-3 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
-                <GraduationCap size={22} />
+            <div className="mb-10 flex items-center gap-3 lg:hidden">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg">
+                <GraduationCap size={22} strokeWidth={2.5} />
               </div>
 
-              <span className="font-semibold text-gray-900">
+              <span className="text-lg font-bold text-gray-900">
                 Study Assistant
               </span>
             </div>
 
             {/* Heading */}
             <div className="mb-8">
-              <h2 className="text-3xl font-bold tracking-tight text-[#17203A]">
-                {isRegistering ? 'Create Account' : 'Welcome Back!'}
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                {isRegistering ? 'Create Account' : 'Welcome Back'}
               </h2>
 
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2.5 text-sm text-gray-600">
                 {isRegistering
                   ? 'Sign up to start your learning journey'
                   : 'Log in to continue your learning journey'}
@@ -293,14 +296,14 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="h-12 w-full rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-12 w-full rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
               >
                 {loading ? (isRegistering ? 'Creating account...' : 'Logging in...') : (isRegistering ? 'Sign Up' : 'Log In')}
               </button>
             </form>
 
             {/* Toggle Auth Mode */}
-            <p className="mt-7 text-center text-sm text-gray-500">
+            <p className="mt-8 text-center text-sm text-gray-600">
               {isRegistering ? (
                 <>
                   Already have an account?{' '}
@@ -311,7 +314,7 @@ export function LoginPage() {
                       setError(null)
                       setFormData({ email: '', password: '', name: '' })
                     }}
-                    className="font-semibold text-indigo-600 hover:text-indigo-700"
+                    className="font-semibold text-indigo-600 transition hover:text-indigo-700"
                   >
                     Log in
                   </button>
@@ -326,7 +329,7 @@ export function LoginPage() {
                       setError(null)
                       setFormData({ email: '', password: '', name: '' })
                     }}
-                    className="font-semibold text-indigo-600 hover:text-indigo-700"
+                    className="font-semibold text-indigo-600 transition hover:text-indigo-700"
                   >
                     Sign up
                   </button>
@@ -335,6 +338,7 @@ export function LoginPage() {
             </p>
           </div>
         </section>
+        </div>
       </div>
     </main>
   )
@@ -351,12 +355,12 @@ function Feature({
 }) {
   return (
     <div className="text-center">
-      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
+      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
         {icon}
       </div>
 
       <p className="text-xs font-semibold">{title}</p>
-      <p className="mt-1 text-[11px] text-indigo-100">
+      <p className="mt-1 text-[11px] leading-relaxed text-indigo-50/90">
         {description}
       </p>
     </div>
