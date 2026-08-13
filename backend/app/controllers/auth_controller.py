@@ -10,7 +10,7 @@ class AuthController:
         user = await auth_service.register_user(
             email=request.email, password=request.password, name=request.name
         )
-        return UserResponse(email=user["email"], name=user["name"])
+        return UserResponse(id=user["id"], email=user["email"], name=user["name"])
 
     async def login(
         self, form_data: OAuth2PasswordRequestForm = Depends()
@@ -21,7 +21,7 @@ class AuthController:
         return TokenResponse(access_token=token, token_type="bearer")
 
     async def get_me(self, current_user: dict) -> UserResponse:
-        return UserResponse(email=current_user["email"], name=current_user["name"])
+        return UserResponse(id=current_user["id"], email=current_user["email"], name=current_user["name"])
 
 
 auth_controller = AuthController()

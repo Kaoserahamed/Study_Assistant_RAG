@@ -8,7 +8,7 @@ import { useDocuments } from '@/hooks/useDocuments'
 import { DocumentGrid } from '@/components/documents/DocumentGrid'
 
 export function UploadPage() {
-  const { documents, uploadTasks, addFiles } = useDocuments()
+  const { documents, uploadTasks, addFiles, error, setError } = useDocuments()
   const [courseTag, setCourseTag] = useState('CS 4780')
 
   const recentlyAdded = documents.filter((d) => d.status !== 'ready').slice(0, 6)
@@ -20,6 +20,23 @@ export function UploadPage() {
         title="Upload study materials"
         description="Add PDF textbooks, lecture notes, slide decks, or handouts. We'll extract and index the text so it becomes searchable and citable."
       />
+
+      {error && (
+        <Card className="mb-6 bg-red-50 border-red-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-medium text-red-900">Upload error</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700"
+            >
+              ✕
+            </button>
+          </div>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-[1fr_220px] gap-4 mb-6">
         <UploadDropzone onFiles={(files) => addFiles(files, courseTag)} />

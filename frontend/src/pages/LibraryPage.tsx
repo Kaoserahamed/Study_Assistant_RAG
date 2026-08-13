@@ -9,7 +9,7 @@ import { useDocuments } from '@/hooks/useDocuments'
 import type { DocumentKind } from '@/types'
 
 export function LibraryPage() {
-  const { documents, isLoading } = useDocuments()
+  const { documents, isLoading, removeDocument } = useDocuments()
   const [activeKind, setActiveKind] = useState<DocumentKind | 'all'>('all')
   const [query, setQuery] = useState('')
 
@@ -29,6 +29,10 @@ export function LibraryPage() {
       d.courseTag.toLowerCase().includes(query.toLowerCase())
     return matchesKind && matchesQuery
   })
+
+  const handleDocumentDelete = (docId: string) => {
+    removeDocument(docId)
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-10">
@@ -66,7 +70,10 @@ export function LibraryPage() {
           ))}
         </div>
       ) : (
-        <DocumentGrid docs={filtered} />
+        <DocumentGrid 
+          docs={filtered} 
+          onDocumentDelete={handleDocumentDelete}
+        />
       )}
     </div>
   )

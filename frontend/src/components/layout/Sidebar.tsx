@@ -1,5 +1,6 @@
-import { BookMarked, LayoutGrid, MessagesSquare, UploadCloud } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { BookMarked, LayoutGrid, MessagesSquare, UploadCloud, LogOut } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
@@ -9,6 +10,14 @@ const navItems = [
 ]
 
 export function Sidebar() {
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <aside className="hidden md:flex flex-col w-60 shrink-0 border-r border-paper-line bg-paper h-screen sticky top-0">
       <div className="px-5 pt-6 pb-5 border-b border-paper-line">
@@ -19,8 +28,8 @@ export function Sidebar() {
             <div className="absolute right-0 top-0 bottom-0 w-[6px] rounded-r bg-highlighter" />
           </div>
           <div>
-            <p className="font-display text-base leading-none text-ink">Marginal</p>
-            <p className="text-[11px] text-ink-faint mt-0.5">study on your own materials</p>
+            <p className="font-display text-base leading-none text-ink">Study Assistant</p>
+            <p className="text-[11px] text-ink-faint mt-0.5">AI-powered RAG learning</p>
           </div>
         </div>
       </div>
@@ -45,13 +54,32 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-4 pb-5">
+      <div className="px-4 pb-5 space-y-3 border-t border-paper-line pt-5">
+        {/* User Info */}
+        {user && (
+          <div className="rounded-card border border-paper-line bg-white p-3.5">
+            <p className="text-xs font-medium text-ink mb-1">Account</p>
+            <p className="text-[11px] text-ink-soft font-medium truncate">{user.name}</p>
+            <p className="text-[11px] text-ink-faint truncate">{user.email}</p>
+          </div>
+        )}
+
+        {/* Help Text */}
         <div className="rounded-card border border-paper-line bg-white p-3.5">
-          <p className="text-xs font-medium text-ink mb-1">Course library</p>
+          <p className="text-xs font-medium text-ink mb-1">About</p>
           <p className="text-[11px] text-ink-soft leading-relaxed">
-            Answers are generated only from what you've uploaded, with page citations attached.
+            Answers are generated only from your uploaded documents with page citations.
           </p>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/[0.05] transition-colors"
+        >
+          <LogOut className="h-4 w-4" strokeWidth={1.9} />
+          Log Out
+        </button>
       </div>
     </aside>
   )

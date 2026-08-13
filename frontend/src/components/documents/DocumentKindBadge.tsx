@@ -11,6 +11,18 @@ const kindConfig: Record<DocumentKind, { icon: typeof BookOpen; tone: string }> 
 
 export function DocumentKindBadge({ kind }: { kind: DocumentKind }) {
   const config = kindConfig[kind]
+  
+  // Fallback if kind is not recognized
+  if (!config) {
+    console.warn(`[DocumentKindBadge] Unknown document kind: ${kind}`)
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-denim">
+        <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />
+        {documentKindLabels[kind] || 'Document'}
+      </span>
+    )
+  }
+  
   const Icon = config.icon
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${config.tone}`}>

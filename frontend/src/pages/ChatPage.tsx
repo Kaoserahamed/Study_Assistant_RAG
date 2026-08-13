@@ -1,6 +1,6 @@
 import { BookOpen, PanelRightOpen, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { ChatBubble } from '@/components/chat/ChatBubble'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { DocumentScopePicker } from '@/components/chat/DocumentScopePicker'
@@ -8,18 +8,26 @@ import { SourcesPanel } from '@/components/chat/SourcesPanel'
 import { Button } from '@/components/ui/Button'
 import { useChat } from '@/hooks/useChat'
 import { useDocuments } from '@/hooks/useDocuments'
-import { chatThreads } from '@/data/mockData'
 import type { Citation } from '@/types'
 
 export function ChatPage() {
+  const { conversationId } = useParams()
   const { documents, isLoading } = useDocuments()
   const [searchParams] = useSearchParams()
-  const { messages, isAsking, send } = useChat(chatThreads[0]?.messages ?? [])
+  const { messages, isAsking, send, loadConversation } = useChat([])
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null)
   const [showSourcesMobile, setShowSourcesMobile] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const initializedFromQuery = useRef(false)
+
+  // Load existing conversation if conversationId is provided
+  useEffect(() => {
+    if (conversationId) {
+      console.log('[ChatPage] Loading conversation:', conversationId)
+      loadConversation(parseInt(conversationId))
+    }
+  }, [conversationId, loadConversation])
 
   useEffect(() => {
     if (documents.length && selectedDocIds.length === 0) {

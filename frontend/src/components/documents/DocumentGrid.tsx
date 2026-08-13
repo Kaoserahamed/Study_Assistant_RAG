@@ -5,7 +5,12 @@ import { BookOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 
-export function DocumentGrid({ docs }: { docs: StudyDocument[] }) {
+interface DocumentGridProps {
+  docs: StudyDocument[]
+  onDocumentDelete?: (docId: string) => void
+}
+
+export function DocumentGrid({ docs, onDocumentDelete }: DocumentGridProps) {
   if (docs.length === 0) {
     return (
       <EmptyState
@@ -24,7 +29,11 @@ export function DocumentGrid({ docs }: { docs: StudyDocument[] }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
       {docs.map((doc) => (
-        <DocumentCard key={doc.id} doc={doc} />
+        <DocumentCard 
+          key={doc.id} 
+          doc={doc} 
+          onDelete={onDocumentDelete}
+        />
       ))}
     </div>
   )
