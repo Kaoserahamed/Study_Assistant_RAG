@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [development]
-  pull_request:
-    branches: [development]
+    branches: \[main\]
 
 jobs:
   lint:
@@ -130,3 +128,4 @@ jobs:
           sleep 10
           curl -f http://localhost:8000/
           docker compose down
+
